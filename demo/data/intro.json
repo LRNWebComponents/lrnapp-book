@@ -4,7 +4,7 @@
       "items": [
       {
         "title": "Introduction",
-        "dataUrl": "data/about-elmsln.md",
+        "url": "data/about-elmsln.md",
         "status": "available",
         "value": 25,
         "max": 100,
@@ -13,7 +13,7 @@
       },
       {
         "title": "Introduction",
-        "dataUrl": "data/intro.json",
+        "url": "data/intro.md",
         "status": "available",
         "value": 25,
         "max": 100,
