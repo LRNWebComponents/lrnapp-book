@@ -6,11 +6,14 @@
     <style>
       :host {
         display: block;
+        font-size: 1em;
       }
       app-toolbar {
         color: gray;
-        border-bottom: 2px solid whitesmoke;
         background-color: white;
+        padding: 0 .5em;
+        margin: 0;
+        height: auto;
       }
       paper-button {
         padding: 0;
@@ -35,51 +38,39 @@
       lrndesign-stepper-button {
         --lrndesign-stepper-btn-active: #f6f7f7;
       }
-      .title {
-        margin-left: 10px;
+      .outline-title {
+        margin-left: .5em;
         max-width: 50%;
       }
-
-      #content-wrap {
-          min-height: 500px;
-          display: flex;
-          flex-wrap: wrap;
-          justify-content: space-around;
+      .content-nav-buttons {
+        bottom: 0;
+        position: absolute;
+        height: 50vh;
+        padding: 0 1em;
       }
-
+      .prev {
+        left: 0;
+      }
+      .next {
+        right: 0;
+      }
+      #body {
+        font-family: sans-serif;
+      }
       .content-body {
         position: relative;
-        padding: 2em;
-        font-family: sans-serif;
+        padding: 0 2em;
+        margin: 0 auto;
         font-size: 1.3em;
         width: 80%;
-        margin: 0 auto;
       }
-
-      .lrns-prev-next-button {
-        display: flex;
-        flex: 0 1 50%;
-        justify-content: center;
-        align-items: center;
+      .content-current {
+        overflow-y: scroll;
+        height: 80vh;
       }
-      @media screen and (min-width: 600px) {
-        #content-wrap .prev {
-          order: 0;
-        }
-        #content-wrap .content-body {
-          order: 1;
-          flex: 1 1 auto;
-        }
-        #content-wrap .next {
-          order: 2;
-        }
-        #content-wrap {
-          flex-direction: row;
-          flex-wrap: nowrap;
-        }
-      }
-      .content-body {
-        flex: 0 1 100%;
+      .content-next {
+        background-color: grey;
+        opacity: .8;
       }
 
       app-header {
@@ -90,33 +81,61 @@
         color: black;
         background-color: white;
         z-index: 1;
-        padding: 1em 0 0 0;
+        padding: 0;
+        margin: 0;
+      }
+      .progress-container {
+        width: 90%;
+        padding: 0;
+        margin: 0 0 0 1em;
+        overflow: visible;
       }
 
       [main-title] {
         font-weight: lighter;
-        height: 100%;
-        padding: 2em .5em 0 .5em;
+        padding: .6em 0 0 0;
+        margin: 0;
+        height: 3em;
+        overflow-y: scroll;
+      }
+      lrnsys-progress {
+        margin-top: .5em;
+        padding: .2em 0 0 0;
       }
 
       @media (max-width: 639px) {
         [main-title] {
-          margin-left: 50px;
-          font-size: 30px;
+          font-size: .8em;
         }
-        [condensed-title] {
-          font-size: 15px;
+        .outline-title {
+          position: absolute !important;
+          clip: rect(1px 1px 1px 1px); /* IE6, IE7 */
+          clip: rect(1px, 1px, 1px, 1px);
+          overflow: hidden;
+          height: 1px;
+        }
+      }
+      @media (max-width: 500px) {
+        [main-title] {
+          font-size: .7em;
         }
       }
     </style>
     <iron-ajax
        auto
-       id="ajax"
+       id="outlineajax"
        params="[[requestParams]]"
-       url="[[sourcePath]]"
+       url="[[outlinePath]]"
        handle-as="json"
        on-response="handleResponse"
-       last-response="{{requestData}}"></iron-ajax>
+       last-response="{{outlineData}}"></iron-ajax>
+    <iron-ajax
+       id="bookajax"
+       params="[[requestParams]]"
+       url="[[bookPath]]"
+       handle-as="json"
+       on-response="handleResponse"
+       last-response="{{bookData}}"></iron-ajax>
 
     <app-drawer id="drawer" opened="[[opened]]" swipe-open transition-duration="500">
       <div style="height: 100%; overflow: auto;">
@@ -139,24 +158,47 @@
         <div style="pointer-events: auto;" class="menu-btn-wrap">
           <paper-icon-button style="pointer-events: auto;" title="Content outline" id="menubutton" icon="menu"></paper-icon-button>
         </div>
-        <div spacer class="title">[[title]]</div>
+        <div spacer class="outline-title">[[title]]</div>
         <div spacer main-title style="pointer-events: auto;">
-          <lrnsys-progress title="The steps to complete this lesson" id="progress" active="0" items="{{items}}" progressive-unlock></lrnsys-progress>
+          <div class="progress-container">
+            <lrnsys-progress title="The steps to complete this lesson" id="progress" active="{{activePage}}" items="{{items}}" progressive-unlock size="small" sound></lrnsys-progress>
+          </div>
         </div>
       </app-toolbar>
     </app-header>
 
     <div id="body">
+      <div class="content-nav-buttons prev">
+        <paper-icon-button id="prev" title="[[prevLabel]]" on-tap="_prevBtn" icon="hardware:keyboard-arrow-left" hidden$="[[!hasPrevPage]]"></paper-icon-button>
+        <paper-tooltip
+          for="prev"
+          position="bottom"
+          offset="0"
+          animation-delay="0">
+          [[prevLabel]]
+        </paper-tooltip>
+      </div>
+      <div class="content-nav-buttons next">
+        <paper-icon-button id="next" title="[[nextLabel]]" on-tap="_nextBtn" icon="hardware:keyboard-arrow-right" hidden$="[[!hasNextPage]]"></paper-icon-button>
+        <paper-tooltip
+          for="next"
+          position="bottom"
+          offset="0"
+          animation-delay="0">
+          [[nextLabel]]
+        </paper-tooltip>
+      </div>
       <div class="content-body">
-        <p>
-          <slot></slot>
-        </p>
-      </div>
-      <div class="lrns-prev-next-button prev">
-          <paper-icon-button title="previous button" on-tap="prevBtn" icon="hardware:keyboard-arrow-left"></paper-icon-button>
-      </div>
-      <div class="lrns-prev-next-button next">
-          <paper-icon-button title="next button" on-tap="nextBtn" icon="hardware:keyboard-arrow-right"></paper-icon-button>
+        <div id="previous" class="content-previous"></div>
+        <div id="current" class="content-current">
+          <scroll-position value="{{scrollPosition}}"></scroll-position>
+          <div id="currentcontent">
+            <p>
+              <slot></slot>
+            </p>
+          </div>
+        </div>
+        <div id="next" class="content-next"></div>
       </div>
     </div>
   </template>
@@ -166,8 +208,44 @@
       listeners: {
         'menubutton.tap': 'toggleoutline',
         'progress.progress-response-loaded': 'loadPage',
+        'progress.node-percent-milestone': 'testMilestone',
       },
       properties: {
+        /**
+         * Distance through the present document so we can visualize
+         */
+        scrollPosition: {
+          type: Number,
+          value: 0,
+          observer: '_scrollChanged',
+        },
+        /**
+         * Track the active page exposed from the progress bar.
+         */
+        activePage: {
+          type: Number,
+          value: 0,
+          observer: '_activePageChanged',
+        },
+        /**
+         * List of items in our book presently.
+         */
+        items: {
+          type: Array,
+          value: [],
+          notify: true,
+          observer: '_itemsChanged',
+        },
+        /**
+         * Item responses.
+         */
+        itemResponses: {
+          type: Array,
+          value: [],
+        },
+        /**
+         * Params for the request for content to load.
+         */
         requestParams: {
           type: Object,
           reflectToAttribute: true,
@@ -176,35 +254,171 @@
             "node": null
           },
         },
-        items: {
-          type: Array,
-          value: [],
-        },
-        requestData: {
+        /**
+         * Returned data for processing.
+         */
+        outlineData: {
           type: Object,
           reflectToAttribute: true,
           notify: true,
         },
+        /**
+         * Returned data for processing.
+         */
+        bookData: {
+          type: Object,
+          reflectToAttribute: true,
+          notify: true,
+        },
+        /**
+         * data pathway that expects the present outline returned.
+         */
+        outlinePath: {
+          type: String,
+        },
+        /**
+         * data pathway that expects the book chapters returned.
+         */
+        bookPath: {
+          type: String,
+        },
+        /**
+         * Simple flag for having the previous button show.
+         */
         hasPrevPage: {
           type: Boolean,
           reflectToAttribute: true,
           notify: true,
         },
-        prevPage: {
+        /**
+         * Previous page title.
+         */
+        prevLabel: {
           type: String,
-          reflectToAttribute: true,
-          notify: true,
         },
+        /**
+         * Simple flag for having the next button show.
+         */
         hasNextPage: {
           type: Boolean,
           reflectToAttribute: true,
           notify: true,
         },
-        nextPage: {
+        /**
+         * Next page title.
+         */
+        nextLabel: {
           type: String,
-          reflectToAttribute: true,
-          notify: true,
         },
+        /**
+         * Ensure scrolling doesn't influence during a transition.
+         */
+        resetScroll: {
+          type: Boolean,
+          value: false,
+        },
+      },
+      /**
+       * React to active page being changed.
+       */
+      _activePageChanged: function (newValue, oldValue) {
+        if (typeof newValue !== typeof undefined) {
+          // scroll into view the container that's about to be
+          // swapped out
+          this.resetScroll = true;
+          this.scrollPosition = 0;
+          this.$.currentcontent.scrollIntoView({block: "start", behavior: "smooth"});
+          // ensure that scrolling percentage doesn't increase the next item
+          // while active is being changed
+          setTimeout( () => {
+            this.resetScroll = false;
+          }, 1000);
+          // manage the requests to ensure we already have
+          // data for this since the bar should have loaded
+          // it up for us but doesnt know what to do with it
+          // @todo pipe this into the body field / replace
+          // contents of the slot
+
+          // manage the previous page button on the UI
+          if (this.activePage == 0) {
+            this.hasPrevPage = false;
+          }
+          else {
+            this.hasPrevPage = true;
+            if (typeof this.items !== typeof undefined) {
+              this.prevLabel = this.items[this.activePage - 1].title;
+            }
+          }
+          // manage next page button on the UI
+          if (typeof this.items !== typeof undefined && (this.activePage + 1) == this.items.length) {
+            this.hasNextPage = false;
+          }
+          else {
+            this.hasNextPage = true;
+            if (typeof this.items !== typeof undefined) {
+              this.nextLabel = this.items[this.activePage + 1].title;
+            }
+          }
+        }
+      },
+      /**
+       * React to items being changed.
+       */
+      _itemsChanged: function (newValue, oldValue) {
+        // these need set immediately
+        if (typeof this.items !== typeof undefined && this.items.length != 0) {
+          // manage the previous page button on the UI
+          if (this.activePage != 0) {
+            this.prevLabel = this.items[this.activePage - 1].title;
+          }
+          // manage next page button on the UI
+          if ((this.activePage + 1) != this.items.length) {
+            this.nextLabel = this.items[this.activePage + 1].title;
+          }
+        }
+      },
+      /**
+       * Test what milestone has been hit and if we should start to preload
+       * items as a result of it!
+       */
+       testMilestone: function (e) {
+        // we should preload the next page
+        if (e.detail.percentage == 75) {
+          console.log('preload the next page and present greyed out at bottom of UI.');
+        }
+       },
+      /**
+       * Pass down scroll change to the element for progress visualization.
+       */
+      _scrollChanged: function (newValue, oldValue) {
+        // only evaluate scroll if value is greater then previous
+        if (typeof this.items !== typeof undefined && newValue > this.items[this.activePage].value && !this.resetScroll) {
+          // once we get 90% of the way through the material consider it finished
+          if (newValue > 90) {
+            this.items[this.activePage].value = this.items[this.activePage].max;
+            this.set('items.' + this.activePage + '.value', this.items[this.activePage].max);
+          }
+          else {
+            this.items[this.activePage].value = newValue;
+            this.set('items.' + this.activePage + '.value', newValue);
+          }
+        }
+      },
+      /**
+       * Pass down the click to the next page if we have one
+       */
+      _nextBtn: function (e) {
+        if (this.activePage < this.items.length) {
+          this.activePage = this.activePage + 1;
+        }
+      },
+      /**
+       * Pass down the click to the prev page if we have one
+       */
+      _prevBtn: function (e) {
+        if (this.activePage > 0) {
+          this.activePage = this.activePage - 1;
+        }
       },
       /**
        * Load the page that the progress bar dictated.
@@ -222,47 +436,8 @@
        * Handle the response.
        */
       handleResponse: function (obj) {
-        let root = this;
         const response = obj.detail.response.data.items;
         this.set('items', response);
-        // look for previous link
-        if (typeof response.prev !== typeof undefined) {
-          root.hasPrevPage = true;
-          root.prevPage = response.prev;
-        }
-        else {
-          root.hasPrevPage = false;
-        }
-        // look for next link
-        if (typeof response.next !== typeof undefined) {
-          root.hasNextPage = true;
-          root.nextPage = response.next;
-        }
-        else {
-          root.hasNextPage = false;
-        }
-        // ensure we have content
-        if (typeof response.content !==  typeof undefined) {
-          root.$$('#nav').innerHTML = response.content.nav;
-          root.$$('#breadcrumb').innerHTML = response.content.breadcrumb;
-          root.$$('#content').innerHTML = response.content.body;
-        }
-      },
-      loadNextPage: function() {
-        let root = this;
-        root.$$('#ajax').params.node = root.nextPage;
-        root.$$('#ajax').generateRequest();
-      },
-      loadPrevPage: function() {
-        let root = this;
-        root.$$('#ajax').params.node = root.prevPage;
-        root.$$('#ajax').generateRequest();
-      },
-      changePage: function(e) {
-        let root = this;
-        console.log(e);
-        //root.$$('#ajax').params.node = root.activePage;
-        root.$$('#ajax').generateRequest();
       },
       /**
        * Simple way to convert from object to array.

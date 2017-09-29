@@ -5,10 +5,10 @@
   "start_url": "/",
   "display": "standalone",
   "app_integration": {
-    "title": "Book",
+    "title": "Book player",
     "endpoints": {
       "data": {
-        "callback": "_mooc_page_player_data",
+        "callback": "_lrnapp_book_data",
         "property": "source-path"
       }
     }

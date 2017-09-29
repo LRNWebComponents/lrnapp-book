@@ -14,7 +14,7 @@
       {
         "title": "Introduction",
         "dataUrl": "data/intro.json",
-        "status": "available",
+        "status": "disabled",
         "value": 25,
         "max": 100,
         "icon": "gif",
