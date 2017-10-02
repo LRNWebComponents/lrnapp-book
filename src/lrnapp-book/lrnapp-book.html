@@ -1,5 +1,19 @@
 <link rel="import" href="imports.html">
 
+<!--
+`lrnsys-progress`
+A LRN element
+
+@demo demo/index.html
+
+@microcopy
+  node / circle - A progress circle on the line
+  nodes / items - the list of items in the progress bar
+  bubble - reserved for when events fire out of an element or value is tracking events
+  percentage - amount complete either in the bar or the nodes themselves
+  bar - the underlayed bar that's tracking overall progression
+-->
+
 <dom-module id="lrnapp-book">
   <template>
     <style include="materializecss-styles"></style>
@@ -66,7 +80,7 @@
       }
       .content-current {
         overflow-y: scroll;
-        height: 80vh;
+        height: 90vh;
       }
       .content-next {
         background-color: grey;
@@ -161,7 +175,7 @@
         <div spacer class="outline-title">[[title]]</div>
         <div spacer main-title style="pointer-events: auto;">
           <div class="progress-container">
-            <lrnsys-progress title="The steps to complete this lesson" id="progress" active="{{activePage}}" items="{{items}}" progressive-unlock size="small" sound></lrnsys-progress>
+            <lrnsys-progress complete-sound="../../bower_components/lrnsys-progress/assets/complete.mp3" finished-sound="../../bower_components/lrnsys-progress/assets/finished.mp3" title="The steps to complete this lesson" id="progress" active="{{activePage}}" items="{{items}}" progressive-unlock size="small" sound></lrnsys-progress>
           </div>
         </div>
       </app-toolbar>
