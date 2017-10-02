@@ -1,0 +1,47 @@
+
+<!--
+`scroll-position`
+A Web Component that hold the current scroll value
+
+@demo demo/index.html
+
+-->
+
+<script>
+
+customElements.define('scroll-position',
+
+  class ScrollPosition extends HTMLElement
+  {
+    constructor()
+    {
+      super();
+
+      this.value = 0.0;
+    }
+
+    connectedCallback()
+    {
+      let body = document.body;
+      let element = this.parentNode;
+
+      let valueChangedEvent = new CustomEvent('value-changed', {detail: {value: 0.0}});
+      this.dispatchEvent(valueChangedEvent);
+
+      element.addEventListener('scroll', () =>
+      {
+        let a = element.scrollTop;
+        let b = element.scrollHeight - element.clientHeight;
+        let c = (a / b) * 100;
+
+        this.value = c;
+
+        valueChangedEvent = new CustomEvent('value-changed', {detail: {value: this.value}});
+        this.dispatchEvent(valueChangedEvent);
+      });
+    }
+  }
+
+);
+
+</script>

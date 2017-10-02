@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+    <title>Scroll Position Demo</title>
+    <script src="../../webcomponentsjs/webcomponents-lite.min.js"></script>
+
+    <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+    <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+    <link rel="import" href="../../paper-progress/paper-progress.html">
+    <link rel="import" href="../scroll-position.html">
+  </head>
+  <body unresolved>
+
+    <demo-snippet>
+      <template is="dom-bind">
+        <style is="custom-style">
+
+          .container
+          {
+            height: 300px;
+            overflow: scroll;
+            text-align: center;
+          }
+
+          paper-progress
+          {
+            width: 100%;
+          }
+
+        </style>
+
+        <div class="container">
+          <scroll-position value="{{value}}"></scroll-position>
+          <img src="http://lorempixel.com/1080/1920" />
+        </div>
+
+        <br><br>
+
+        <paper-progress value="[[value]]"></paper-progress>
+
+      </template>
+    </demo-snippet>
+
+  </body>
+</html>

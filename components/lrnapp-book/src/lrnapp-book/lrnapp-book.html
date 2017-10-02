@@ -1,0 +1,466 @@
+<link rel="import" href="imports.html">
+
+<!--
+`lrnsys-progress`
+A LRN element
+
+@demo demo/index.html
+
+@microcopy
+  node / circle - A progress circle on the line
+  nodes / items - the list of items in the progress bar
+  bubble - reserved for when events fire out of an element or value is tracking events
+  percentage - amount complete either in the bar or the nodes themselves
+  bar - the underlayed bar that's tracking overall progression
+-->
+
+<dom-module id="lrnapp-book">
+  <template>
+    <style include="materializecss-styles"></style>
+    <style>
+      :host {
+        display: block;
+        font-size: 1em;
+      }
+      app-toolbar {
+        color: gray;
+        background-color: white;
+        padding: 0 .5em;
+        margin: 0;
+        height: auto;
+      }
+      paper-button {
+        padding: 0;
+        margin: 0;
+        min-width: 1rem;
+      }
+
+      app-drawer {
+        padding: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 100;
+        --app-drawer-content-container: {
+          background-color: #fafafa;
+          padding: 10px;
+          z-index: 100;
+          border-right: 1px solid #c8c8c8;
+          overflow: inherit;
+        }
+      }
+
+      lrndesign-stepper-button {
+        --lrndesign-stepper-btn-active: #f6f7f7;
+      }
+      .outline-title {
+        margin-left: .5em;
+        max-width: 50%;
+      }
+      .content-nav-buttons {
+        bottom: 0;
+        position: absolute;
+        height: 50vh;
+        padding: 0 1em;
+      }
+      .prev {
+        left: 0;
+      }
+      .next {
+        right: 0;
+      }
+      #body {
+        font-family: sans-serif;
+      }
+      .content-body {
+        position: relative;
+        padding: 0 2em;
+        margin: 0 auto;
+        font-size: 1.3em;
+        width: 80%;
+      }
+      .content-current {
+        overflow-y: scroll;
+        height: 90vh;
+      }
+      .content-next {
+        background-color: grey;
+        opacity: .8;
+      }
+
+      app-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        color: black;
+        background-color: white;
+        z-index: 1;
+        padding: 0;
+        margin: 0;
+      }
+      .progress-container {
+        width: 90%;
+        padding: 0;
+        margin: 0 0 0 1em;
+        overflow: visible;
+      }
+
+      [main-title] {
+        font-weight: lighter;
+        padding: .6em 0 0 0;
+        margin: 0;
+        height: 3em;
+        overflow-y: scroll;
+      }
+      lrnsys-progress {
+        margin-top: .5em;
+        padding: .2em 0 0 0;
+      }
+
+      @media (max-width: 639px) {
+        [main-title] {
+          font-size: .8em;
+        }
+        .outline-title {
+          position: absolute !important;
+          clip: rect(1px 1px 1px 1px); /* IE6, IE7 */
+          clip: rect(1px, 1px, 1px, 1px);
+          overflow: hidden;
+          height: 1px;
+        }
+      }
+      @media (max-width: 500px) {
+        [main-title] {
+          font-size: .7em;
+        }
+      }
+    </style>
+    <iron-ajax
+       auto
+       id="outlineajax"
+       params="[[requestParams]]"
+       url="[[outlinePath]]"
+       handle-as="json"
+       on-response="handleResponse"
+       last-response="{{outlineData}}"></iron-ajax>
+    <iron-ajax
+       id="bookajax"
+       params="[[requestParams]]"
+       url="[[bookPath]]"
+       handle-as="json"
+       on-response="handleResponse"
+       last-response="{{bookData}}"></iron-ajax>
+
+    <app-drawer id="drawer" opened="[[opened]]" swipe-open transition-duration="500">
+      <div style="height: 100%; overflow: auto;">
+        <paper-search-bar hide-filter-button></paper-search-bar>
+        <div class="course-title-drawer">Course Outline</div>
+        <div class="stepper-button-wrapper">
+          <div class="tab-wrapper">
+            <div class="tabs">
+              <template is="dom-repeat" items="[[items]]" as="item">
+                <lrndesign-stepper-button class="tab" title="[[item.title]]" icon="[[item.icon]]" location="[[item.url]]"></lrndesign-stepper-button>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </app-drawer>
+
+    <app-header condenses reveals shadow effects="parallax-background">
+      <app-toolbar class="tall">
+        <div style="pointer-events: auto;" class="menu-btn-wrap">
+          <paper-icon-button style="pointer-events: auto;" title="Content outline" id="menubutton" icon="menu"></paper-icon-button>
+        </div>
+        <div spacer class="outline-title">[[title]]</div>
+        <div spacer main-title style="pointer-events: auto;">
+          <div class="progress-container">
+            <lrnsys-progress complete-sound="../../bower_components/lrnsys-progress/assets/complete.mp3" finished-sound="../../bower_components/lrnsys-progress/assets/finished.mp3" title="The steps to complete this lesson" id="progress" active="{{activePage}}" items="{{items}}" progressive-unlock size="small" sound></lrnsys-progress>
+          </div>
+        </div>
+      </app-toolbar>
+    </app-header>
+
+    <div id="body">
+      <div class="content-nav-buttons prev">
+        <paper-icon-button id="prev" title="[[prevLabel]]" on-tap="_prevBtn" icon="hardware:keyboard-arrow-left" hidden$="[[!hasPrevPage]]"></paper-icon-button>
+        <paper-tooltip
+          for="prev"
+          position="bottom"
+          offset="0"
+          animation-delay="0">
+          [[prevLabel]]
+        </paper-tooltip>
+      </div>
+      <div class="content-nav-buttons next">
+        <paper-icon-button id="next" title="[[nextLabel]]" on-tap="_nextBtn" icon="hardware:keyboard-arrow-right" hidden$="[[!hasNextPage]]"></paper-icon-button>
+        <paper-tooltip
+          for="next"
+          position="bottom"
+          offset="0"
+          animation-delay="0">
+          [[nextLabel]]
+        </paper-tooltip>
+      </div>
+      <div class="content-body">
+        <div id="previous" class="content-previous"></div>
+        <div id="current" class="content-current">
+          <scroll-position value="{{scrollPosition}}"></scroll-position>
+          <div id="currentcontent">
+            <p>
+              <slot></slot>
+            </p>
+          </div>
+        </div>
+        <div id="next" class="content-next"></div>
+      </div>
+    </div>
+  </template>
+  <script>
+    Polymer({
+      is: 'lrnapp-book',
+      listeners: {
+        'menubutton.tap': 'toggleoutline',
+        'progress.progress-response-loaded': 'loadPage',
+        'progress.node-percent-milestone': 'testMilestone',
+      },
+      properties: {
+        /**
+         * Distance through the present document so we can visualize
+         */
+        scrollPosition: {
+          type: Number,
+          value: 0,
+          observer: '_scrollChanged',
+        },
+        /**
+         * Track the active page exposed from the progress bar.
+         */
+        activePage: {
+          type: Number,
+          value: 0,
+          observer: '_activePageChanged',
+        },
+        /**
+         * List of items in our book presently.
+         */
+        items: {
+          type: Array,
+          value: [],
+          notify: true,
+          observer: '_itemsChanged',
+        },
+        /**
+         * Item responses.
+         */
+        itemResponses: {
+          type: Array,
+          value: [],
+        },
+        /**
+         * Params for the request for content to load.
+         */
+        requestParams: {
+          type: Object,
+          reflectToAttribute: true,
+          notify: true,
+          value: {
+            "node": null
+          },
+        },
+        /**
+         * Returned data for processing.
+         */
+        outlineData: {
+          type: Object,
+          reflectToAttribute: true,
+          notify: true,
+        },
+        /**
+         * Returned data for processing.
+         */
+        bookData: {
+          type: Object,
+          reflectToAttribute: true,
+          notify: true,
+        },
+        /**
+         * data pathway that expects the present outline returned.
+         */
+        outlinePath: {
+          type: String,
+        },
+        /**
+         * data pathway that expects the book chapters returned.
+         */
+        bookPath: {
+          type: String,
+        },
+        /**
+         * Simple flag for having the previous button show.
+         */
+        hasPrevPage: {
+          type: Boolean,
+          reflectToAttribute: true,
+          notify: true,
+        },
+        /**
+         * Previous page title.
+         */
+        prevLabel: {
+          type: String,
+        },
+        /**
+         * Simple flag for having the next button show.
+         */
+        hasNextPage: {
+          type: Boolean,
+          reflectToAttribute: true,
+          notify: true,
+        },
+        /**
+         * Next page title.
+         */
+        nextLabel: {
+          type: String,
+        },
+        /**
+         * Ensure scrolling doesn't influence during a transition.
+         */
+        resetScroll: {
+          type: Boolean,
+          value: false,
+        },
+      },
+      /**
+       * React to active page being changed.
+       */
+      _activePageChanged: function (newValue, oldValue) {
+        if (typeof newValue !== typeof undefined) {
+          // scroll into view the container that's about to be
+          // swapped out
+          this.resetScroll = true;
+          this.scrollPosition = 0;
+          this.$.currentcontent.scrollIntoView({block: "start", behavior: "smooth"});
+          // ensure that scrolling percentage doesn't increase the next item
+          // while active is being changed
+          setTimeout( () => {
+            this.resetScroll = false;
+          }, 1000);
+          // manage the requests to ensure we already have
+          // data for this since the bar should have loaded
+          // it up for us but doesnt know what to do with it
+          // @todo pipe this into the body field / replace
+          // contents of the slot
+
+          // manage the previous page button on the UI
+          if (this.activePage == 0) {
+            this.hasPrevPage = false;
+          }
+          else {
+            this.hasPrevPage = true;
+            if (typeof this.items !== typeof undefined) {
+              this.prevLabel = this.items[this.activePage - 1].title;
+            }
+          }
+          // manage next page button on the UI
+          if (typeof this.items !== typeof undefined && (this.activePage + 1) == this.items.length) {
+            this.hasNextPage = false;
+          }
+          else {
+            this.hasNextPage = true;
+            if (typeof this.items !== typeof undefined) {
+              this.nextLabel = this.items[this.activePage + 1].title;
+            }
+          }
+        }
+      },
+      /**
+       * React to items being changed.
+       */
+      _itemsChanged: function (newValue, oldValue) {
+        // these need set immediately
+        if (typeof this.items !== typeof undefined && this.items.length != 0) {
+          // manage the previous page button on the UI
+          if (this.activePage != 0) {
+            this.prevLabel = this.items[this.activePage - 1].title;
+          }
+          // manage next page button on the UI
+          if ((this.activePage + 1) != this.items.length) {
+            this.nextLabel = this.items[this.activePage + 1].title;
+          }
+        }
+      },
+      /**
+       * Test what milestone has been hit and if we should start to preload
+       * items as a result of it!
+       */
+       testMilestone: function (e) {
+        // we should preload the next page
+        if (e.detail.percentage == 75) {
+          console.log('preload the next page and present greyed out at bottom of UI.');
+        }
+       },
+      /**
+       * Pass down scroll change to the element for progress visualization.
+       */
+      _scrollChanged: function (newValue, oldValue) {
+        // only evaluate scroll if value is greater then previous
+        if (typeof this.items !== typeof undefined && newValue > this.items[this.activePage].value && !this.resetScroll) {
+          // once we get 90% of the way through the material consider it finished
+          if (newValue > 90) {
+            this.items[this.activePage].value = this.items[this.activePage].max;
+            this.set('items.' + this.activePage + '.value', this.items[this.activePage].max);
+          }
+          else {
+            this.items[this.activePage].value = newValue;
+            this.set('items.' + this.activePage + '.value', newValue);
+          }
+        }
+      },
+      /**
+       * Pass down the click to the next page if we have one
+       */
+      _nextBtn: function (e) {
+        if (this.activePage < this.items.length) {
+          this.activePage = this.activePage + 1;
+        }
+      },
+      /**
+       * Pass down the click to the prev page if we have one
+       */
+      _prevBtn: function (e) {
+        if (this.activePage > 0) {
+          this.activePage = this.activePage - 1;
+        }
+      },
+      /**
+       * Load the page that the progress bar dictated.
+       */
+      loadPage: function (e) {
+        console.log(e.detail);
+      },
+      /**
+       * Toggle the outline.
+       */
+      toggleoutline: function (e) {
+        this.$.drawer.toggle();
+      },
+      /**
+       * Handle the response.
+       */
+      handleResponse: function (obj) {
+        const response = obj.detail.response.data.items;
+        this.set('items', response);
+      },
+      /**
+       * Simple way to convert from object to array.
+       */
+      _toArray: function(obj) {
+        return Object.keys(obj).map(function(key) {
+          return obj[key];
+        });
+      },
+    });
+  </script>
+</dom-module>
