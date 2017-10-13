@@ -5,11 +5,52 @@
   "start_url": "/",
   "display": "standalone",
   "app_integration": {
-    "title": "Book player",
+    "title": "",
     "endpoints": {
-      "data": {
-        "callback": "_lrnapp_book_data",
+      "api/outline": {
+        "callback": "_lrnapp_book_outline_data",
+        "property": "outline-path"
+      },
+      "api/book": {
+        "callback": "_lrnapp_book_book_data",
+        "property": "book-path"
+      },
+      "api/page": {
+        "callback": "_lrnapp_book_page_data",
+        "property": "page-path"
+      },
+      "api/page/create-stub": {
+        "callback": "_lrnapp_book_create_stub",
         "property": "source-path"
+      },
+      "api/page/%": {
+        "callback": "_lrnapp_book_findone",
+        "property": "source-path"
+      }
+    },
+    "properties": {
+      "request-params" : {
+        "callback": "_lrnapp_book_render_active_params"
+      },
+      "current-title" : {
+        "callback": "_lrnapp_book_render_active_title"
+      },
+      "outline-title" : {
+        "callback": "_lrnapp_book_render_outline_title"
+      },
+      "book-title" : {
+        "callback": "_lrnapp_book_render_book_title"
+      },
+      "complete-sound" : {
+        "callback": "_lrnapp_book_complete_sound"
+      },
+      "finished-sound" : {
+        "callback": "_lrnapp_book_finish_sound"
+      }
+    },
+    "slots": {
+      "content" : {
+        "callback": "_lrnapp_book_render_active_node"
       }
     }
   }
